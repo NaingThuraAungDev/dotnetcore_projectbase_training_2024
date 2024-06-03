@@ -1,0 +1,17 @@
+@TodoApi_HostAddress = http://localhost:5290
+
+
+POST {{TodoApi_HostAddress}}/api/AddTodoItem
+Content-Type: application/json
+
+{
+    "Id": 0,
+    "title": "Test1",
+    "completed": false
+}
+
+###
+
+GET {{TodoApi_HostAddress}}/api/GetTodoItems
+Accept: application/json
+###
