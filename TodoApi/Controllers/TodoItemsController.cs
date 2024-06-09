@@ -20,7 +20,7 @@ public class TodoItemsController : ControllerBase
         _context.TodoItems.Add(todoItem);
         await _context.SaveChangesAsync();
 
-        return Created("", todoItem);
+        return Created(nameof(GetTodoItems), todoItem);
     }
 
     // GET: api/TodoItems
