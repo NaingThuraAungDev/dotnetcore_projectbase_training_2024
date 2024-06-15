@@ -49,5 +49,23 @@ public class BookController : ControllerBase
         return Ok();
     }
 
+    // GET: api/GetBookByCategoryName/Romance
+    [HttpGet("GetBookByCategoryName/{categoryName}", Name = "GetBookByCategoryName")]
+    public async Task<ActionResult<IEnumerable<Book>>> GetBookByCategoryName(string categoryName)
+    {
+        var mainQuery = from b in _context.Book
+                        join c in _context.Category on b.category equals c.category_id
+                        where c.category_name == categoryName
+                        select new GetBookByCategoryNameResponseDTO
+                        {
+                            Title = b.title,
+                            Author = b.author,
+                            Description = b.description,
+                            Price = b.price,
+                            Category = c.category_name
+                        };
+        return await Task.FromResult(Ok(mainQuery));
+    }
+
 
 }

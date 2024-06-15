@@ -1,5 +1,6 @@
 namespace TodoApi.Models;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("book")]
 public class Book
 {
     public int book_id { get; set; }

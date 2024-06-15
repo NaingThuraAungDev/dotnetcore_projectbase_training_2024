@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
+using TodoApi.Models;
 
 public class AppDB : DbContext
 {
@@ -42,4 +43,16 @@ public class AppDB : DbContext
         }
         return result;
     }
+
+    public DbSet<Category> Category { get; set; }
+    public DbSet<Book> Book { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Category>()
+        .HasKey(c => c.category_id);
+
+        modelBuilder.Entity<Book>()
+       .HasKey(c => c.book_id);
+    }
+
 }
