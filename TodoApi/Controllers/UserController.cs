@@ -98,9 +98,47 @@ namespace TodoApi.Controllers
 
         [Authorize]
         [HttpGet("GetUser", Name = "GetUser")]
-        public async Task<ActionResult<List<User>>> GetUser()
+        public async Task<ActionResult<List<GetUserResponseDTO>>> GetUser()
         {
-            return await _context.User.ToListAsync();
+            List<GetUserResponseDTO> userList = await (from user in _context.User
+                                                       select new GetUserResponseDTO
+                                                       {
+                                                           UserID = GlobalFunction.AES_Encrypt_ECB_128(user.user_id.ToString(), "sampleKey123"),
+                                                           UserName = user.user_name,
+                                                           IsLock = user.is_lock.ToString(),
+                                                           FailCount = user.login_fail_count.ToString()
+                                                       }).ToListAsync();
+            return Ok(userList);
+        }
+
+        [Authorize]
+        [HttpPut("UnlockUser", Name = "UnlockUser")]
+        public async Task<ActionResult<CreateUserResponseDTO>> UnlockUser(UnlockUserRequestDTO id)
+        {
+            CreateUserResponseDTO createUserResponse = new CreateUserResponseDTO();
+            int userID = int.Parse(GlobalFunction.AES_Decrypt_ECB_128(id.UserID, "sampleKey123"));
+            var oldUser = _context.User.Where(u => u.user_id == userID).FirstOrDefault();
+            if (oldUser == null)
+            {
+                createUserResponse = new CreateUserResponseDTO
+                {
+                    status = "fail",
+                    message = "User not found"
+                };
+            }
+            else
+            {
+                oldUser.is_lock = false;
+                oldUser.login_fail_count = 0;
+                await _context.SaveChangesAsync();
+                createUserResponse = new CreateUserResponseDTO
+                {
+                    status = "success",
+                    message = "User unlocked successfully"
+                };
+            }
+
+            return Ok(createUserResponse);
         }
 
         [Authorize]

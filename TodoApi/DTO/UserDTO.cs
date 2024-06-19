@@ -23,4 +23,17 @@ namespace TodoApi.DTO
         public string message { get; set; }
         public string accessToken { get; set; }
     }
+
+    public class GetUserResponseDTO
+    {
+        public string UserID { get; set; }
+        public string UserName { get; set; }
+        public string IsLock { get; set; }
+        public string FailCount { get; set; }
+    }
+
+    public class UnlockUserRequestDTO
+    {
+        public string UserID { get; set; }
+    }
 }

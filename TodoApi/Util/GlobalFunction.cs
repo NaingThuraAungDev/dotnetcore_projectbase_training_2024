@@ -74,5 +74,90 @@ namespace TodoApi.Util
             };
             return claims;
         }
+
+        public static string AES_Encrypt_ECB_128(string plainText, string EncryptKey)
+        {
+            if (String.IsNullOrEmpty(plainText) || String.IsNullOrEmpty(EncryptKey))
+                return "";
+            string cipherText = "";
+            try
+            {
+                using (Aes aesAlg = Aes.Create())
+                {
+                    aesAlg.KeySize = 128;
+                    aesAlg.BlockSize = 128;
+                    aesAlg.Mode = CipherMode.ECB;
+                    aesAlg.Padding = PaddingMode.PKCS7;
+                    aesAlg.Key = mkey(EncryptKey); //Encoding.UTF8.GetBytes(Iat);
+                    aesAlg.IV = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                    byte[] clearBytes = Encoding.UTF8.GetBytes(plainText);
+                    ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                    using (MemoryStream msEncrypt = new MemoryStream())
+                    {
+                        using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                        {
+                            csEncrypt.Write(clearBytes, 0, clearBytes.Length);
+                        }
+                        cipherText = Convert.ToBase64String(msEncrypt.ToArray());
+                    }
+                }
+                return cipherText;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return cipherText;
+        }
+
+        public static string AES_Decrypt_ECB_128(string cipherText, string EncryptKey)
+        {
+            if (cipherText == "")
+                return "";
+
+            string plainText = "";
+            try
+            {
+                using (Aes aesAlg = Aes.Create())
+                {
+                    aesAlg.KeySize = 128;
+                    aesAlg.BlockSize = 128;
+                    aesAlg.Mode = CipherMode.ECB;
+                    aesAlg.Padding = PaddingMode.PKCS7;
+                    aesAlg.Key = mkey(EncryptKey);
+                    aesAlg.IV = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                    ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+                    using (MemoryStream msDecrypt = new MemoryStream(Convert.FromBase64String(cipherText)))
+                    {
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                            {
+                                plainText = srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
+                }
+                return plainText;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return plainText;
+        }
+
+        private static byte[] mkey(string skey)
+        {
+
+            byte[] key = Encoding.UTF8.GetBytes(skey);
+            byte[] k = new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            for (int i = 0; i < key.Length; i++)
+            {
+                k[i % 16] = (byte)(k[i % 16] ^ key[i]);
+            }
+
+            return k;
+        }
     }
 }
