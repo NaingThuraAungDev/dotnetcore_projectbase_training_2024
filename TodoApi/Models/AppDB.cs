@@ -46,13 +46,15 @@ public class AppDB : DbContext
 
     public DbSet<Category> Category { get; set; }
     public DbSet<Book> Book { get; set; }
+    public DbSet<User> User { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>()
         .HasKey(c => c.category_id);
-
         modelBuilder.Entity<Book>()
        .HasKey(c => c.book_id);
+        modelBuilder.Entity<User>()
+        .HasKey(c => c.user_id);
     }
 
 }
