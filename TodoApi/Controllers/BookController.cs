@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.DTO;
 using TodoApi.Models;
+using TodoApi.Repositories;
 
 [ApiController]
 [Route("api/[controller]")]
 public class BookController : ControllerBase
 {
+    #region without repository pattern
+    /*
     private readonly AppDB _context;
 
     public BookController(AppDB context)
@@ -66,6 +69,66 @@ public class BookController : ControllerBase
                         };
         return await Task.FromResult(Ok(mainQuery));
     }
+*/
+    #endregion
 
+    #region with repository pattern
+    private readonly IRepositoryWrapper _repositoryWrapper;
+    public BookController(IRepositoryWrapper repositoryWrapper)
+    {
+        _repositoryWrapper = repositoryWrapper;
+    }
 
+    // GET: api/book/getallbooks
+    [HttpGet("GetAllBooks", Name = "GetAllBooks")]
+    public async Task<ActionResult<IEnumerable<Book>>> GetAllBooks()
+    {
+        string query = "SELECT * FROM book;";
+        IEnumerable<Book> bookList = await _repositoryWrapper.Book.GetAll<Book>(query, new DynamicParameters());
+        return Ok(bookList);
+    }
+
+    // POST: api/AddBook
+    [HttpPost("AddBook", Name = "AddBook")]
+    public async Task<ActionResult<Book>> AddBook(BookDTO book)
+    {
+        string query = "INSERT INTO book (title, author, description, price, category) VALUES (@Title, @Author, @Description, @Price, @Category);";
+        int effectedRows = await _repositoryWrapper.Book.EditData(query, book);
+        if (effectedRows > 0)
+        {
+            return Created(nameof(GetAllBooks), book);
+        }
+        else
+        {
+            return StatusCode(500, "Failed to add book");
+        }
+    }
+
+    // PUT: api/UpdateBook
+    [HttpPut("UpdateBook", Name = "UpdateBook")]
+    public async Task<IActionResult> UpdateBook(UpdateBookRequestDTO book)
+    {
+        string query = "UPDATE book SET price = @Price WHERE book_id = @BookID;";
+        await _repositoryWrapper.Book.EditData(query, book);
+        return Ok(book);
+    }
+
+    // DELETE: api/DeleteBook/1
+    [HttpDelete("DeleteBook/{bookID}", Name = "DeleteBook")]
+    public async Task<IActionResult> DeleteBook(int bookID)
+    {
+        string query = "DELETE FROM book WHERE book_id = @id;";
+        await _repositoryWrapper.Book.EditData(query, new { id = bookID });
+        return Ok();
+    }
+
+    // GET: api/GetBookByCategoryName/Romance
+    [HttpGet("GetBookByCategoryName/{categoryName}", Name = "GetBookByCategoryName")]
+    public async Task<ActionResult<GetBookByCategoryNameResponseDTO>> GetBookByCategoryName(string categoryName)
+    {
+        GetBookByCategoryNameResponseDTO? book = await _repositoryWrapper.Book.GetBookByCategoryName(categoryName);
+        return Ok(book);
+    }
+
+    #endregion
 }
