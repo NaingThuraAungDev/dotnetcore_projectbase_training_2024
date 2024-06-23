@@ -12,5 +12,15 @@ namespace TodoApi.Repositories
                 return _book;
             }
         }
+
+        private IEventLogRepository? _eventLog;
+        public IEventLogRepository EventLog
+        {
+            get
+            {
+                _eventLog ??= new EventLogRepository(_context);
+                return _eventLog;
+            }
+        }
     }
 }

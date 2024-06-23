@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using System.Collections.Generic;
 using System.Security.Claims;
 using TodoApi.DTO;
@@ -11,7 +12,7 @@ namespace TodoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController : BaseController<UserController>
     {
         private readonly AppDB _context;
 
@@ -60,39 +61,54 @@ namespace TodoApi.Controllers
         public async Task<ActionResult<LoginResponseDTO>> Login(LoginRequestDTO user)
         {
             LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
-            var oldUser = _context.User.Where(u => u.user_name == user.UserName).FirstOrDefault();
-            if (oldUser == null)
+            try
             {
-                loginResponseDTO = new LoginResponseDTO
-                {
-                    status = "fail",
-                    message = "Username or Password is incorrect"
-                };
-            }
-            else
-            {
-                var hash = Util.GlobalFunction.ComputeHash(oldUser.salt, user.Password);
-                if (hash == oldUser.password)
-                {
-                    Claim[] claims = GlobalFunction.CreateClaim(oldUser.user_id, new DateTimeOffset(DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds().ToString());
-                    var token = GlobalFunction.CreateJWTToken(claims);
-                    loginResponseDTO = new LoginResponseDTO
-                    {
-                        status = "success",
-                        message = "Login success",
-                        accessToken = token
-                    };
-                }
-                else
+                var oldUser = _context.User.Where(u => u.user_name == user.UserName).FirstOrDefault();
+                if (oldUser == null)
                 {
                     loginResponseDTO = new LoginResponseDTO
                     {
                         status = "fail",
                         message = "Username or Password is incorrect"
                     };
+                    Logger?.LogInformation("User {0} not found", user.UserName);
                 }
+                else
+                {
+                    var hash = Util.GlobalFunction.ComputeHash(oldUser.salt, user.Password);
+                    if (hash == oldUser.password)
+                    {
+                        Claim[] claims = GlobalFunction.CreateClaim(oldUser.user_id, new DateTimeOffset(DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds().ToString());
+                        var token = GlobalFunction.CreateJWTToken(claims);
+                        loginResponseDTO = new LoginResponseDTO
+                        {
+                            status = "success",
+                            message = "Login success",
+                            accessToken = token
+                        };
+                        Logger?.LogInformation("User {0} login success", user.UserName);
+                    }
+                    else
+                    {
+                        loginResponseDTO = new LoginResponseDTO
+                        {
+                            status = "fail",
+                            message = "Username or Password is incorrect"
+                        };
+                        Logger?.LogInformation("User {0} login fail", user.UserName);
+                    }
+                }
+                throw new Exception("Test Exception");
             }
-
+            catch (Exception e)
+            {
+                loginResponseDTO = new LoginResponseDTO
+                {
+                    status = "fail",
+                    message = "Username or Password is incorrect"
+                };
+                Logger?.LogError(e, "Error login user {0}", user.UserName);
+            }
             return Ok(loginResponseDTO);
         }
 

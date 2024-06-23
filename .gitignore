@@ -3,3 +3,7 @@
 /TodoApi.Tests/bin/Debug/net8.0
 /TodoApi.Tests/obj/Debug/net8.0
 /TodoApi.Tests/obj
+/TodoApi.Tests/coverage.cobertura.xml
+/TodoApi.Tests/coveragereport
+/TodoApi/bin/Release/net8.0
+/TodoApi/obj/Release/net8.0

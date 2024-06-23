@@ -2,12 +2,23 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer; // Add this line
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using TodoApi.Repositories;
+
+
+Log.Logger = new LoggerConfiguration() // serilog configuration
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+Log.Information("WebApi starting up");
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddSerilog((services, lc) => lc
+    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
+//.WriteTo.Console());
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -39,7 +50,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
 var app = builder.Build();
-
+app.UseSerilogRequestLogging();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

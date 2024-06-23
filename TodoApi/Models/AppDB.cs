@@ -47,6 +47,7 @@ public class AppDB : DbContext
     public DbSet<Category> Category { get; set; }
     public DbSet<Book> Book { get; set; }
     public DbSet<User> User { get; set; }
+    public DbSet<EventLog> EventLog { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>()
@@ -55,6 +56,8 @@ public class AppDB : DbContext
        .HasKey(c => c.book_id);
         modelBuilder.Entity<User>()
         .HasKey(c => c.user_id);
+        modelBuilder.Entity<EventLog>()
+        .HasKey(c => new { c.log_type, c.log_datetime });
     }
 
 }

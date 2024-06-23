@@ -1,6 +1,8 @@
+using System.Text.Json;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using TodoApi.DTO;
 using TodoApi.Models;
 using TodoApi.Repositories;
@@ -92,14 +94,44 @@ public class BookController : ControllerBase
     [HttpPost("AddBook", Name = "AddBook")]
     public async Task<ActionResult<Book>> AddBook(BookDTO book)
     {
-        string query = "INSERT INTO book (title, author, description, price, category) VALUES (@Title, @Author, @Description, @Price, @Category);";
-        int effectedRows = await _repositoryWrapper.Book.EditData(query, book);
-        if (effectedRows > 0)
+        try
         {
-            return Created(nameof(GetAllBooks), book);
+            string query = "INSERT INTO book (title, author, description, price, category) VALUES (@Title, @Author, @Description, @Price, @Category);";
+            int effectedRows = await _repositoryWrapper.Book.EditData(query, book);
+            if (effectedRows > 0)
+            {
+                EventLog eventLog = new EventLog
+                {
+                    log_type = (int)LogType.Insert,
+                    log_datetime = DateTime.Now,
+                    log_message = "Created a new book " + JsonSerializer.Serialize(book),
+                    error_message = "",
+                    form_name = "AddBook",
+                    source = "BookController"
+                };
+                _repositoryWrapper.EventLog.Create(eventLog);
+                await _repositoryWrapper.EventLog.Save();
+                return Created(nameof(GetAllBooks), book);
+            }
+            else
+            {
+                return StatusCode(500, "Failed to add book");
+            }
         }
-        else
+        catch (Exception ex)
         {
+            Log.Error(ex, "Error in AddBook");
+            EventLog eventLog = new EventLog
+            {
+                log_type = (int)LogType.Error,
+                log_datetime = DateTime.Now,
+                log_message = "",
+                error_message = ex.Message,
+                form_name = "AddBook",
+                source = "BookController"
+            };
+            _repositoryWrapper.EventLog.Create(eventLog);
+            await _repositoryWrapper.EventLog.Save();
             return StatusCode(500, "Failed to add book");
         }
     }
