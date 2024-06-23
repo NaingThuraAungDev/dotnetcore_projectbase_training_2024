@@ -127,8 +127,17 @@ public class BookController : ControllerBase
     public async Task<ActionResult<GetBookByCategoryNameResponseDTO>> GetBookByCategoryName(string categoryName)
     {
         GetBookByCategoryNameResponseDTO? book = await _repositoryWrapper.Book.GetBookByCategoryName(categoryName);
-        return Ok(book);
+        if (book == null)
+        {
+            return NotFound();
+        }
+        else
+        {
+            return Ok(book);
+        }
     }
+
+
 
     #endregion
 }
