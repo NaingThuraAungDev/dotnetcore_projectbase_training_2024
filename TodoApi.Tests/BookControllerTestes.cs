@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using TodoApi.DTO;
 using TodoApi.Models;
@@ -7,6 +8,16 @@ using TodoApi.Repositories;
 
 public class BookControllerTests
 {
+    private readonly IConfiguration _configuration;
+
+    public BookControllerTests()
+    {
+        var mockConfiguration = new Mock<IConfiguration>();
+        mockConfiguration.SetupGet(x => x["TokenAuthentication:SecretKey"]).Returns("ojt2024_globalwave_secretkeysample");
+        mockConfiguration.SetupGet(x => x["TokenAuthentication:Issuer"]).Returns("ToDo");
+        _configuration = mockConfiguration.Object;
+    }
+
     [Fact]
     public async Task GetAllBooks_ReturnsAllBooks()
     {
@@ -21,7 +32,7 @@ public class BookControllerTests
         mockRepo.Setup(repo => repo.Book.GetAll<Book>(It.IsAny<string>(), It.IsAny<DynamicParameters>()))
                 .ReturnsAsync(books);
 
-        var controller = new BookController(mockRepo.Object);
+        var controller = new BookController(mockRepo.Object, _configuration);
 
         // Act
         var result = await controller.GetAllBooks();
@@ -49,7 +60,7 @@ public class BookControllerTests
         mockRepo.Setup(repo => repo.Book.GetBookByCategoryName(categoryName))
                 .ReturnsAsync(expectedBook);
 
-        var controller = new BookController(mockRepo.Object);
+        var controller = new BookController(mockRepo.Object, _configuration);
 
         // Act
         var result = await controller.GetBookByCategoryName(categoryName);
@@ -70,7 +81,7 @@ public class BookControllerTests
                  .ReturnsAsync((GetBookByCategoryNameResponseDTO?)null);
 
         // Act
-        BookController controller = new BookController(mockRepo.Object);
+        BookController controller = new BookController(mockRepo.Object, _configuration);
         var result = await controller.GetBookByCategoryName(categoryName);
 
         // Assert

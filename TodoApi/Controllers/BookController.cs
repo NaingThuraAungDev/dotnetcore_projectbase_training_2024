@@ -74,16 +74,20 @@ public class BookController : ControllerBase
 
     #region with repository pattern
     private readonly IRepositoryWrapper _repositoryWrapper;
-    public BookController(IRepositoryWrapper repositoryWrapper)
+    private readonly IConfiguration _configuration;
+    public BookController(IRepositoryWrapper repositoryWrapper, IConfiguration configuration)
     {
         _repositoryWrapper = repositoryWrapper;
+        _configuration = configuration;
     }
 
     // GET: api/book/getallbooks
     [HttpGet("GetAllBooks", Name = "GetAllBooks")]
-    public async Task<ActionResult<IEnumerable<Book>>> GetAllBooks()
+    public async Task<ActionResult<string>> GetAllBooks()
     {
         string query = "SELECT * FROM book;";
+        var value = _configuration["TokenAuthentication:SecretKey"];
+        var value2 = _configuration["TokenAuthentication:Issuer"];
         IEnumerable<Book> bookList = await _repositoryWrapper.Book.GetAll<Book>(query, new DynamicParameters());
         return Ok(bookList);
     }
